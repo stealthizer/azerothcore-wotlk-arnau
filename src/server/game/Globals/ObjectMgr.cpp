@@ -2,8 +2,9 @@
  * Copyright (C) 2016+     AzerothCore <www.azerothcore.org>, released under GNU GPL v2 license, you may redistribute it and/or modify it under version 2 of the License, or (at your option), any later version.
  * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Parser added by NapalM, 2021
  */
-
+#include <regex> // Added for the parser.
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "ArenaTeamMgr.h"
@@ -423,8 +424,183 @@ void ObjectMgr::LoadGossipMenuItemsLocales()
             continue;
 
         GossipMenuItemsLocale& data = _gossipMenuItemsLocaleStore[MAKE_PAIR32(MenuID, OptionID)];
+/* // Commented by parser
         AddLocaleString(fields[3].GetString(), locale, data.OptionText);
         AddLocaleString(fields[4].GetString(), locale, data.BoxText);
+*/
+		/*	*************************************
+			* LoadGossipMenuItemsLocales parser *
+			************************************** */
+		
+//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){ // All locales take time...
+	int loc_idx = 6;	// ... I only use locale 6
+		for (int f = 3; f < 5 ; f++) {
+			std::string s(fields[f].GetString());
+
+			std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+			auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+			auto words_end = std::sregex_iterator();
+			std::smatch match;
+			std::string match_str;
+
+			std::vector<std::string> parseVector;
+
+			bool trobat;
+			for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+				match = *i;
+				match_str = match.str();
+				trobat = false;
+				for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+					trobat = parseVector[i] == match_str;
+				if (!trobat) parseVector.push_back(match_str);
+			}
+
+			std::string substString;
+			char select;
+			unsigned int pid;
+			for (unsigned int i = 0; i < parseVector.size(); i++){
+				pid = std::stoi(parseVector[i].substr(2));
+				select = parseVector[i][1];
+				switch (select) {
+					case 'i':
+							if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'o':
+							if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'c':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'n':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>0) substString = vSresult[0];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'N':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>1) substString = vSresult[1];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'm':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>3) substString = vSresult[3];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'M':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>4) substString = vSresult[4];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;					
+					case 'p':
+							if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 's':
+							if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;					
+					default:
+						substString = parseVector[i];
+					break;
+				}
+				s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+			}
+
+			switch (f) {
+				case 3:
+					AddLocaleString(std::string(s), locale, data.OptionText);
+				break;
+				case 4:
+					AddLocaleString(std::string(s), locale, data.BoxText);
+				break;
+			}
+		}
+//	}
+
+		/*	*****************************************
+			* LoadGossipMenuItemsLocales parser end *
+			***************************************** */
+
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %u Gossip Menu Option Locale strings in %u ms", (uint32)_gossipMenuItemsLocaleStore.size(), GetMSTimeDiffToNow(oldMSTime));
@@ -4791,6 +4967,7 @@ void ObjectMgr::LoadQuestLocales()
             continue;
 
         QuestLocale& data = _questLocaleStore[ID];
+/* // parser
         AddLocaleString(fields[2].GetString(), locale, data.Title);
         AddLocaleString(fields[3].GetString(), locale, data.Details);
         AddLocaleString(fields[4].GetString(), locale, data.Objectives);
@@ -4799,6 +4976,208 @@ void ObjectMgr::LoadQuestLocales()
 
         for (uint8 i = 0; i < 4; ++i)
             AddLocaleString(fields[i + 7].GetString(), locale, data.ObjectiveText[i]);
+*/
+
+
+		/*	***************************
+			* LoadQuestLocales parser *
+			*************************** */
+		
+//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){	 // All locales take time...
+	int loc_idx = 6;	// ... I only use locale 6
+		for (int f = 2; f < 11 ; f++) {
+		//int f = 2;
+			std::string s(fields[f].GetString());
+
+			std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+			auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+			auto words_end = std::sregex_iterator();
+			std::smatch match;
+			std::string match_str;
+
+			std::vector<std::string> parseVector;
+
+			bool trobat;
+			for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+				match = *i;
+				match_str = match.str();
+				trobat = false;
+				for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+					trobat = parseVector[i] == match_str;
+				if (!trobat) parseVector.push_back(match_str);
+			}
+
+			std::string substString;
+			char select;
+			unsigned int pid;
+			for (unsigned int i = 0; i < parseVector.size(); i++){
+				pid = std::stoi(parseVector[i].substr(2));
+				select = parseVector[i][1];
+				switch (select) {
+					case 'i':
+							if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'o':
+							if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'c':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+
+					case 'n':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>0) substString = vSresult[0];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'N':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>1) substString = vSresult[1];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'm':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>3) substString = vSresult[3];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'M':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>4) substString = vSresult[4];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;
+					
+					case 'p':
+							if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 's':
+							if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;					
+					default:
+						substString = parseVector[i];
+					break;
+				}
+				s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+			}
+
+			switch (f){
+				case 2:
+					AddLocaleString(std::string(s), locale, data.Title);
+				break;
+				case 3:
+					AddLocaleString(std::string(s), locale, data.Details);
+				break;
+				case 4:
+					AddLocaleString(std::string(s), locale, data.Objectives);
+				break;
+				case 5:
+					AddLocaleString(std::string(s), locale, data.AreaDescription);		
+				break;
+				case 6:
+					AddLocaleString(std::string(s), locale, data.CompletedText);
+				break;
+				case 7:
+					AddLocaleString(std::string(s), locale, data.ObjectiveText[0]);
+				break;
+				case 8:
+					AddLocaleString(std::string(s), locale, data.ObjectiveText[1]);
+				break;
+				case 9:
+					AddLocaleString(std::string(s), locale, data.ObjectiveText[2]);
+				break;
+				case 10:
+					AddLocaleString(std::string(s), locale, data.ObjectiveText[3]);
+				break;
+			}
+		}
+//	}
+
+		/*	*******************************
+			* LoadQuestLocales parser end *
+			******************************* */
+
+
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %u Quest Locale strings in %u ms", (uint32)_questLocaleStore.size(), GetMSTimeDiffToNow(oldMSTime));
@@ -5415,7 +5794,171 @@ void ObjectMgr::LoadPageTextLocales()
             continue;
 
         PageTextLocale& data = _pageTextLocaleStore[ID];
-        AddLocaleString(fields[2].GetString(), locale, data.Text);
+ //       AddLocaleString(fields[2].GetString(), locale, data.Text);
+ 
+ 
+		/*	*************************************
+			* LoadPageTextLocales parser *
+			************************************* */
+		
+	//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){	 // All locales take time...
+		int loc_idx = 6;	// ... I only use locale 6
+		std::string s(fields[2].GetString());
+
+		std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+		auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+		auto words_end = std::sregex_iterator();
+		std::smatch match;
+		std::string match_str;
+
+		std::vector<std::string> parseVector;
+
+		bool trobat;
+		for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+			match = *i;
+			match_str = match.str();
+			trobat = false;
+			for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+				trobat = parseVector[i] == match_str;
+			if (!trobat) parseVector.push_back(match_str);
+		}
+
+		std::string substString;
+		char select;
+		unsigned int pid;
+		for (unsigned int i = 0; i < parseVector.size(); i++){
+			pid = std::stoi(parseVector[i].substr(2));
+			select = parseVector[i][1];
+			switch (select) {
+				case 'i':
+						if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+					case 'o':
+							if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+				case 'c':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+				case 'n':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>0) substString = vSresult[0];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'N':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>1) substString = vSresult[1];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'm':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>3) substString = vSresult[3];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;				
+				case 'M':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>4) substString = vSresult[4];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;				
+				case 'p':
+						if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+					case 's':
+							if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;					
+				default:
+					substString = parseVector[i];
+				break;
+			}
+			s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+		}
+		AddLocaleString(std::string(s), locale, data.Text);
+	/*	*****************************************
+		* LoadPageTextLocales parser end *
+		***************************************** */		
+
+ 
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %u Page Text Locale strings in %u ms", (uint32)_pageTextLocaleStore.size(), GetMSTimeDiffToNow(oldMSTime));
@@ -5666,11 +6209,185 @@ void ObjectMgr::LoadNpcTextLocales()
             continue;
 
         NpcTextLocale& data = _npcTextLocaleStore[ID];
+/*		
         for (uint8 i = 0; i < MAX_GOSSIP_TEXT_OPTIONS; ++i)
         {
             AddLocaleString(fields[2 + i * 2].GetString(), locale, data.Text_0[i]);
             AddLocaleString(fields[3 + i * 2].GetString(), locale, data.Text_1[i]);
         }
+*/
+	
+//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){	 // All locales take time...
+	int loc_idx = 6;	// ... I only use locale 6
+		for (int f = 0; f < MAX_GOSSIP_TEXT_OPTIONS ; f++) {
+			for (int fi = 2; fi < 4 ; fi++) {
+				std::string s(fields[fi + f * 2].GetString());
+
+				std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+				auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+				auto words_end = std::sregex_iterator();
+				std::smatch match;
+				std::string match_str;
+
+				std::vector<std::string> parseVector;
+
+				bool trobat;
+				for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+					match = *i;
+					match_str = match.str();
+					trobat = false;
+					for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+						trobat = parseVector[i] == match_str;
+					if (!trobat) parseVector.push_back(match_str);
+				}
+
+				std::string substString;
+				char select;
+				unsigned int pid;
+				for (unsigned int i = 0; i < parseVector.size(); i++){
+					pid = std::stoi(parseVector[i].substr(2));
+					select = parseVector[i][1];
+					switch (select) {
+						case 'i':
+								if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+									ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+								}
+								else {
+									substString = parseVector[i];
+								}
+						break;
+						case 'o':
+								if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+									ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+								}
+								else {
+									substString = parseVector[i];
+								}
+						break;
+						case 'c':
+								if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+									ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+								}
+								else {
+									substString = parseVector[i];
+								}
+						break;
+						case 'n':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								std::string sNom;
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+								std::vector<std::string> vSresult; 
+								std::istringstream streamNom(sNom); 
+								for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+								if (vSresult.size()>0) substString = vSresult[0];
+								else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+							}
+							else substString = parseVector[i];
+						break;
+						case 'N':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								std::string sNom;
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+								std::vector<std::string> vSresult; 
+								std::istringstream streamNom(sNom); 
+								for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+								if (vSresult.size()>1) substString = vSresult[1];
+								else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+							}
+							else substString = parseVector[i];
+						break;
+						case 'm':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								std::string sNom;
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+								std::vector<std::string> vSresult; 
+								std::istringstream streamNom(sNom); 
+								for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+								if (vSresult.size()>3) substString = vSresult[3];
+								else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+							}
+							else substString = parseVector[i];
+						break;
+						case 'M':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								std::string sNom;
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+								std::vector<std::string> vSresult; 
+								std::istringstream streamNom(sNom); 
+								for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+								if (vSresult.size()>4) substString = vSresult[4];
+								else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+							}
+							else substString = parseVector[i];
+						break;
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;						
+						case 'p':
+								if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+									ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+								}
+								else {
+									substString = parseVector[i];
+								}
+						break;
+						case 's':
+								if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+									ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+								}
+								else {
+									substString = parseVector[i];
+								}
+						break;					
+						default:
+							substString = parseVector[i];
+						break;
+					}
+					s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+				}
+
+				switch (fi) {
+					case 2:
+						AddLocaleString(std::string(s), locale, data.Text_0[f]);
+					break;
+					case 3:
+						AddLocaleString(std::string(s), locale, data.Text_1[f]);
+					break;
+				}
+			}
+		}
+//	}
+
+		/*	*******************************
+			* LoadNpcTextLocales parser end *
+			******************************* */
+
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %u Npc Text Locale strings in %u ms", (uint32)_npcTextLocaleStore.size(), GetMSTimeDiffToNow(oldMSTime));
@@ -5882,7 +6599,173 @@ void ObjectMgr::LoadQuestOfferRewardLocale()
             continue;
 
         QuestOfferRewardLocale& data = _questOfferRewardLocaleStore[id];
-        AddLocaleString(fields[2].GetString(), locale, data.RewardText);
+ //       AddLocaleString(fields[2].GetString(), locale, data.RewardText);
+ 
+		/*	*************************************
+			* LoadQuestOfferRewardLocale parser *
+			************************************* */
+		
+	//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){	 // All locales take time...
+		int loc_idx = 6;	// ... I only use locale 6
+		int f = 2;
+		std::string s(fields[f].GetString());
+
+		std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+		auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+		auto words_end = std::sregex_iterator();
+		std::smatch match;
+		std::string match_str;
+
+		std::vector<std::string> parseVector;
+
+		bool trobat;
+		for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+			match = *i;
+			match_str = match.str();
+			trobat = false;
+			for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+				trobat = parseVector[i] == match_str;
+			if (!trobat) parseVector.push_back(match_str);
+		}
+
+		std::string substString;
+		char select;
+		unsigned int pid;
+		for (unsigned int i = 0; i < parseVector.size(); i++){
+			pid = std::stoi(parseVector[i].substr(2));
+			select = parseVector[i][1];
+			switch (select) {
+				case 'i':
+						if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+					case 'o':
+							if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+				case 'c':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+				case 'n':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>0) substString = vSresult[0];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'N':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>1) substString = vSresult[1];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'm':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>3) substString = vSresult[3];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;				
+				case 'M':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>4) substString = vSresult[4];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;				
+				case 'p':
+						if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+					case 's':
+							if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;					
+				default:
+					substString = parseVector[i];
+				break;
+			}
+			s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+		}
+		AddLocaleString(std::string(s), locale, data.RewardText);
+
+	/*	*****************************************
+		* LoadQuestOfferRewardLocale parser end *
+		***************************************** */
+
+ 
+ 
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %lu Quest Offer Reward locale strings in %u ms", _questOfferRewardLocaleStore.size(), GetMSTimeDiffToNow(oldMSTime));
@@ -5911,7 +6794,173 @@ void ObjectMgr::LoadQuestRequestItemsLocale()
             continue;
 
         QuestRequestItemsLocale& data = _questRequestItemsLocaleStore[id];
-        AddLocaleString(fields[2].GetString(), locale, data.CompletionText);
+//       AddLocaleString(fields[2].GetString(), locale, data.CompletionText);
+
+
+		/*	*************************************
+			* LoadQuestOfferRewardLocale parser *
+			************************************* */
+		
+	//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){	 // All locales take time...
+		int loc_idx = 6;	// ... I only use locale 6
+		int f = 2;
+		std::string s(fields[f].GetString());
+
+		std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+		auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+		auto words_end = std::sregex_iterator();
+		std::smatch match;
+		std::string match_str;
+
+		std::vector<std::string> parseVector;
+
+		bool trobat;
+		for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+			match = *i;
+			match_str = match.str();
+			trobat = false;
+			for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+				trobat = parseVector[i] == match_str;
+			if (!trobat) parseVector.push_back(match_str);
+		}
+
+		std::string substString;
+		char select;
+		unsigned int pid;
+		for (unsigned int i = 0; i < parseVector.size(); i++){
+			pid = std::stoi(parseVector[i].substr(2));
+			select = parseVector[i][1];
+			switch (select) {
+				case 'i':
+						if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+					case 'o':
+							if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+				case 'c':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+				case 'n':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>0) substString = vSresult[0];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'N':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>1) substString = vSresult[1];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'm':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>3) substString = vSresult[3];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+				case 'M':
+					if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+						std::string sNom;
+						ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+						std::vector<std::string> vSresult; 
+						std::istringstream streamNom(sNom); 
+						for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+						if (vSresult.size()>4) substString = vSresult[4];
+						else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+					}
+					else substString = parseVector[i];
+				break;
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;				
+				case 'p':
+						if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+						}
+						else {
+							substString = parseVector[i];
+						}
+				break;
+					case 's':
+							if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;					
+				default:
+					substString = parseVector[i];
+				break;
+			}
+			s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+		}
+		AddLocaleString(std::string(s), locale, data.CompletionText);
+
+	/*	*****************************************
+		* LoadQuestOfferRewardLocale parser end *
+		***************************************** */		
+
+
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %lu Quest Request Items locale strings in %u ms", _questRequestItemsLocaleStore.size(), GetMSTimeDiffToNow(oldMSTime));
@@ -8872,8 +9921,184 @@ void ObjectMgr::LoadBroadcastTextLocales()
         if (locale == LOCALE_enUS)
             continue;
 
-        AddLocaleString(fields[2].GetString(), locale, bct->second.MaleText);
-        AddLocaleString(fields[3].GetString(), locale, bct->second.FemaleText);
+ //       AddLocaleString(fields[2].GetString(), locale, bct->second.MaleText);
+ //       AddLocaleString(fields[3].GetString(), locale, bct->second.FemaleText);
+ 
+  		/*	***********************************
+			* LoadBroadcastTextLocales parser *
+			*********************************** */
+		
+//	for ( int loc_idx = 0; loc_idx <9 ; loc_idx++){	 // All locales take time...
+	int loc_idx = 6;	// ... I only use locale 6
+		for (int f = 2; f < 4 ; f++) {
+		//int f = 2;
+			std::string s(fields[f].GetString());
+
+			std::regex e("#[iocpsnNmMdD][0-9]+;");   // Búsqueda
+			auto words_begin = std::sregex_iterator(s.begin(), s.end(), e);
+			auto words_end = std::sregex_iterator();
+			std::smatch match;
+			std::string match_str;
+
+			std::vector<std::string> parseVector;
+
+			bool trobat;
+			for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+				match = *i;
+				match_str = match.str();
+				trobat = false;
+				for (unsigned int i = 0; !trobat && i < parseVector.size(); i++)
+					trobat = parseVector[i] == match_str;
+				if (!trobat) parseVector.push_back(match_str);
+			}
+
+			std::string substString;
+			char select;
+			unsigned int pid;
+			for (unsigned int i = 0; i < parseVector.size(); i++){
+				pid = std::stoi(parseVector[i].substr(2));
+				select = parseVector[i][1];
+				switch (select) {
+					case 'i':
+							if (ItemLocale const* il = sObjectMgr->GetItemLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'o':
+							if (GameObjectLocale const* il = sObjectMgr->GetGameObjectLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'c':
+							if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 'n':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>0) substString = vSresult[0];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'N':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>1) substString = vSresult[1];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'm':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>3) substString = vSresult[3];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;					
+					case 'M':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()>4) substString = vSresult[4];
+							else ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);								
+						}
+						else substString = parseVector[i];
+					break;
+					case 'd':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else substString = vSresult[0]+"s";
+						}
+						else substString = parseVector[i];
+					break;
+					case 'D':
+						if (CreatureLocale const* il = sObjectMgr->GetCreatureLocale(pid)){
+							std::string sNom;
+							ObjectMgr::GetLocaleString(il->Name, loc_idx, sNom);
+							std::vector<std::string> vSresult; 
+							std::istringstream streamNom(sNom); 
+							for(std::string sNom; streamNom >> sNom; ) vSresult.push_back(sNom);
+							if (vSresult.size()==0) ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);
+							else {
+								substString = vSresult[0]+"s";
+								for (unsigned int in=1 ; in<vSresult.size(); in++){
+									substString += " "+vSresult[in];
+								}
+							}
+						}
+						else substString = parseVector[i];
+					break;					
+					case 'p':
+							if (PointOfInterestLocale const* il = sObjectMgr->GetPointOfInterestLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;
+					case 's':
+							if (ItemSetNameLocale const* il = sObjectMgr->GetItemSetNameLocale(pid)){
+								ObjectMgr::GetLocaleString(il->Name, loc_idx, substString);		
+							}
+							else {
+								substString = parseVector[i];
+							}
+					break;					
+					default:
+						substString = parseVector[i];
+					break;
+				}
+				s = std::regex_replace(s, std::regex(parseVector[i]), substString);
+			}
+
+			switch (f){
+				case 2:
+					AddLocaleString(std::string(s), locale, bct->second.MaleText);     
+				break;
+				case 3:
+					AddLocaleString(std::string(s), locale, bct->second.FemaleText);
+				break;
+			}
+		}
+//	}
+
+		/*	***************************************
+			* LoadBroadcastTextLocales parser end *
+			*************************************** */
+
+ 
     } while (result->NextRow());
 
     LOG_INFO("server.loading", ">> Loaded %u Broadcast Text Locales in %u ms", uint32(_broadcastTextStore.size()), GetMSTimeDiffToNow(oldMSTime));

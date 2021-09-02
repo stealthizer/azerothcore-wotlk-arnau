@@ -2,6 +2,7 @@
  * Copyright (C) 2016+     AzerothCore <www.azerothcore.org>, released under GNU GPL v2 license, you may redistribute it and/or modify it under version 2 of the License, or (at your option), any later version.
  * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Canvis pel parser 2021
  */
 
 /** \file
@@ -1541,24 +1542,28 @@ void World::SetInitialWorldSettings()
     LOG_INFO("server.loading", "Loading instances...");
     sInstanceSaveMgr->LoadInstances();
 
-    LOG_INFO("server.loading", "Loading Broadcast texts...");
-    sObjectMgr->LoadBroadcastTexts();
-    sObjectMgr->LoadBroadcastTextLocales();
+    LOG_INFO("server.loading", "Loading Localization strings in parser order...");
 
-    LOG_INFO("server.loading", "Loading Localization strings...");
     uint32 oldMSTime = getMSTime();
+// Items parseables
     sObjectMgr->LoadCreatureLocales();
     sObjectMgr->LoadGameObjectLocales();
     sObjectMgr->LoadItemLocales();
     sObjectMgr->LoadItemSetNameLocales();
+    sObjectMgr->LoadPointOfInterestLocales();
+// Parsed locale texts
     sObjectMgr->LoadQuestLocales();
     sObjectMgr->LoadQuestOfferRewardLocale();
     sObjectMgr->LoadQuestRequestItemsLocale();
     sObjectMgr->LoadNpcTextLocales();
     sObjectMgr->LoadPageTextLocales();
     sObjectMgr->LoadGossipMenuItemsLocales();
-    sObjectMgr->LoadPointOfInterestLocales();
 
+    LOG_INFO("server", "Loading Broadcast texts...");
+    sObjectMgr->LoadBroadcastTexts();
+    sObjectMgr->LoadBroadcastTextLocales();
+	
+	
     sObjectMgr->SetDBCLocaleIndex(GetDefaultDbcLocale());        // Get once for all the locale index of DBC language (console/broadcasts)
     LOG_INFO("server.loading", ">> Localization strings loaded in %u ms", GetMSTimeDiffToNow(oldMSTime));
     LOG_INFO("server.loading", " ");
@@ -2072,9 +2077,12 @@ void World::SetInitialWorldSettings()
     }
 
     uint32 startupDuration = GetMSTimeDiffToNow(startupBegin);
+
     LOG_INFO("server.loading", " ");
     LOG_INFO("server.loading", "WORLD: World initialized in %u minutes %u seconds", (startupDuration / 60000), ((startupDuration % 60000) / 1000)); // outError for red color in console
+    LOG_INFO("server.loading", "Parser v1.1");
     LOG_INFO("server.loading", " ");
+
 
     if (sConfigMgr->isDryRun())
     {
