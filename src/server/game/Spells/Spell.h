@@ -490,6 +490,7 @@ public:
 
     SpellInfo const* m_spellInfo;
     Item* m_CastItem;
+    Item* m_weaponItem;
     ObjectGuid m_castItemGUID;
     uint8 m_cast_count;
     uint32 m_glyphIndex;
@@ -509,6 +510,7 @@ public:
     bool IsTriggered() const { return _triggeredCastFlags & TRIGGERED_FULL_MASK; };
     bool IsChannelActive() const { return m_caster->GetUInt32Value(UNIT_CHANNEL_SPELL) != 0; }
     bool IsAutoActionResetSpell() const;
+    bool IsIgnoringCooldowns() const;
 
     bool IsDeletable() const { return !m_referencedFromCurrentSpell && !m_executedCurrently; }
     void SetReferencedFromCurrent(bool yes) { m_referencedFromCurrentSpell = yes; }
@@ -676,7 +678,7 @@ protected:
     SpellCastResult CallScriptCheckCastHandlers();
     void PrepareScriptHitHandlers();
     bool CallScriptEffectHandlers(SpellEffIndex effIndex, SpellEffectHandleMode mode);
-    void CallScriptBeforeHitHandlers();
+    void CallScriptBeforeHitHandlers(SpellMissInfo missInfo);
     void CallScriptOnHitHandlers();
     void CallScriptAfterHitHandlers();
     void CallScriptObjectAreaTargetSelectHandlers(std::list<WorldObject*>& targets, SpellEffIndex effIndex, SpellImplicitTargetInfo const& targetType);
@@ -714,6 +716,7 @@ protected:
     // we can't store original aura link to prevent access to deleted auras
     // and in same time need aura data and after aura deleting.
     SpellInfo const* m_triggeredByAuraSpell;
+    int8 m_triggeredByAuraEffectIndex;
 
     bool m_skipCheck;
     uint8 m_auraScaleMask;
@@ -732,7 +735,7 @@ protected:
 #endif
 };
 
-namespace acore
+namespace Acore
 {
     struct WorldObjectSpellTargetCheck
     {
